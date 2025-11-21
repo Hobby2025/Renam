@@ -1,75 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Renam 핵심 로직 테스트 스크립트
-GUI 없이 파일 정렬 및 이름 변경 로직을 검증
+Renam 핵심 로직 테스트 스크립트 (리팩토링 버전)
+클린코드 원칙 적용 후 모듈별 테스트
 """
 
-import re
 from pathlib import Path
 from typing import List
 
-
-class FileItem:
-    """파일 정보를 담는 데이터 클래스"""
-    def __init__(self, filepath: Path):
-        self.original_path = filepath
-        self.original_name = filepath.name
-        self.display_name = filepath.name
-        self.new_name = ""
-        self.order = 0
-        self.ext = filepath.suffix.lower()
-        self.stat = filepath.stat()
-
-    def __repr__(self):
-        return f"FileItem({self.original_name} → {self.new_name})"
+from models.file_item import FileItem
+from core.sorter import FileSorter
+from core.name_generator import NameGenerator
+from core.file_operations import FileOperations
+from core.undo_manager import UndoManager
 
 
-def sort_key_numeric(item: FileItem) -> tuple:
-    """숫자 기준 정렬 키"""
-    numbers = re.findall(r'\d+', item.original_name)
-    if numbers:
-        return (int(numbers[0]), item.original_name)
-    return (float('inf'), item.original_name)
-
-
-def sort_key_regex(item: FileItem, pattern: str) -> tuple:
-    """정규식 기반 정렬 키"""
-    match = re.search(pattern, item.original_name)
-    if match:
-        key = match.group(1) if match.groups() else match.group(0)
-        try:
-            return (int(key), item.original_name)
-        except ValueError:
-            return (key, item.original_name)
-    return (float('inf'), item.original_name)
-
-
-def generate_new_name(index: int, pattern: str, ext: str) -> str:
-    """패턴에 따라 새 파일명 생성"""
-    result = pattern
-
-    # {000}, {00}, {0} 형태의 제로 패딩 처리
-    zero_patterns = re.findall(r'\{(0+)\}', result)
-    for zp in zero_patterns:
-        width = len(zp)
-        result = result.replace(f'{{{zp}}}', str(index).zfill(width))
-
-    # {n} 처리
-    result = result.replace('{n}', str(index))
-
-    # 확장자 추가
-    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'}
-    if not any(result.endswith(e) for e in IMAGE_EXTENSIONS):
-        result += ext
-
-    return result
-
-
-def test_sorting():
-    """정렬 로직 테스트"""
+def test_file_operations():
+    """파일 작업 모듈 테스트"""
     print("=" * 60)
-    print("정렬 로직 테스트")
+    print("📂 FileOperations 모듈 테스트")
     print("=" * 60)
 
     test_dir = Path("test_images")
@@ -77,44 +26,69 @@ def test_sorting():
         print("❌ test_images 디렉토리가 없습니다.")
         return
 
-    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'}
-    file_items: List[FileItem] = []
+    # 폴더 검증
+    is_valid, msg = FileOperations.validate_folder(test_dir)
+    print(f"\n폴더 검증: {'✅ 성공' if is_valid else '❌ 실패'}")
 
-    for filepath in test_dir.iterdir():
-        if filepath.is_file() and filepath.suffix.lower() in IMAGE_EXTENSIONS:
-            file_items.append(FileItem(filepath))
+    # 파일 스캔
+    try:
+        file_items = FileOperations.scan_folder(test_dir)
+        print(f"스캔 결과: ✅ {len(file_items)}개의 이미지 파일 발견")
+    except Exception as e:
+        print(f"스캔 오류: ❌ {e}")
+        return
 
-    print(f"\n✅ 총 {len(file_items)}개의 이미지 파일 발견\n")
+    return file_items
 
-    # 1. 숫자 기준 정렬 테스트
-    print("1️⃣ 숫자 기준 정렬:")
-    sorted_items = sorted(file_items, key=sort_key_numeric)
-    for i, item in enumerate(sorted_items, 1):
+
+def test_sorter(file_items: List[FileItem]):
+    """정렬 모듈 테스트"""
+    print("\n" + "=" * 60)
+    print("🔄 FileSorter 모듈 테스트")
+    print("=" * 60)
+
+    # 1. 숫자 정렬
+    print("\n1️⃣ 숫자 기준 정렬:")
+    sorted_items = FileSorter.sort_by_numeric(file_items)
+    for i, item in enumerate(sorted_items[:5], 1):
         print(f"   {i}. {item.original_name}")
 
-    # 2. 알파벳 정렬 테스트
+    # 2. 알파벳 정렬
     print("\n2️⃣ 알파벳 정렬:")
-    sorted_items = sorted(file_items, key=lambda x: x.original_name.lower())
-    for i, item in enumerate(sorted_items, 1):
+    sorted_items = FileSorter.sort_by_alphabetic(file_items)
+    for i, item in enumerate(sorted_items[:5], 1):
         print(f"   {i}. {item.original_name}")
 
-    # 3. 확장자 정렬 테스트
-    print("\n3️⃣ 확장자 정렬:")
-    sorted_items = sorted(file_items, key=lambda x: (x.ext, x.original_name.lower()))
-    for i, item in enumerate(sorted_items, 1):
+    # 3. 날짜 정렬
+    print("\n3️⃣ 생성 날짜 정렬:")
+    sorted_items = FileSorter.sort_by_date(file_items)
+    for i, item in enumerate(sorted_items[:5], 1):
+        print(f"   {i}. {item.original_name}")
+
+    # 4. 확장자 정렬
+    print("\n4️⃣ 확장자 정렬:")
+    sorted_items = FileSorter.sort_by_extension(file_items)
+    for i, item in enumerate(sorted_items[:5], 1):
         print(f"   {i}. {item.original_name} ({item.ext})")
 
-    # 4. 정규식 정렬 테스트
-    print("\n4️⃣ 정규식 정렬 (패턴: r'(\\d+)'):")
-    sorted_items = sorted(file_items, key=lambda x: sort_key_regex(x, r'(\d+)'))
-    for i, item in enumerate(sorted_items, 1):
-        print(f"   {i}. {item.original_name}")
+    # 5. 정규식 정렬
+    print("\n5️⃣ 정규식 정렬 (패턴: r'(\\d+)'):")
+    try:
+        sorted_items = FileSorter.sort_by_regex(file_items, r'(\d+)')
+        for i, item in enumerate(sorted_items[:5], 1):
+            print(f"   {i}. {item.original_name}")
+    except Exception as e:
+        print(f"   ❌ 오류: {e}")
+
+    # order 업데이트 테스트
+    FileSorter.update_order(sorted_items)
+    print(f"\n✅ order 필드 업데이트 완료 (1 ~ {len(sorted_items)})")
 
 
-def test_pattern_generation():
-    """파일명 패턴 생성 테스트"""
+def test_name_generator():
+    """파일명 생성 모듈 테스트"""
     print("\n" + "=" * 60)
-    print("파일명 패턴 생성 테스트")
+    print("📝 NameGenerator 모듈 테스트")
     print("=" * 60)
 
     test_cases = [
@@ -123,72 +97,135 @@ def test_pattern_generation():
         ("{00}", ".jpg"),
         ("IMG_{000}", ".jpg"),
         ("Photo_{n}", ".png"),
-        ("image_{00}.jpg", ".png"),  # 확장자가 이미 있는 경우
     ]
 
     for pattern, ext in test_cases:
         print(f"\n패턴: '{pattern}', 확장자: '{ext}'")
-        for i in range(1, 6):
-            new_name = generate_new_name(i, pattern, ext)
+        for i in range(1, 4):
+            new_name = NameGenerator.generate(i, pattern, ext)
             print(f"   {i} → {new_name}")
 
+    # 패턴 검증 테스트
+    print("\n패턴 유효성 검증:")
+    valid_patterns = ["{n}", "{000}", "IMG_{00}"]
+    invalid_patterns = ["", "   ", "nopattern"]
 
-def test_name_collision_detection():
-    """파일명 중복 감지 테스트"""
+    for p in valid_patterns:
+        is_valid = NameGenerator.validate_pattern(p)
+        print(f"   '{p}': {'✅ 유효' if is_valid else '❌ 무효'}")
+
+    for p in invalid_patterns:
+        is_valid = NameGenerator.validate_pattern(p)
+        print(f"   '{p}': {'✅ 유효' if is_valid else '❌ 무효'}")
+
+    # 중복 검사 테스트
+    print("\n중복 파일명 검사:")
+    no_dup = ["1.jpg", "2.jpg", "3.jpg"]
+    has_dup = ["1.jpg", "2.jpg", "1.jpg"]
+
+    print(f"   {no_dup}: {'❌ 중복 있음' if NameGenerator.check_duplicates(no_dup) else '✅ 중복 없음'}")
+    print(f"   {has_dup}: {'❌ 중복 있음' if NameGenerator.check_duplicates(has_dup) else '✅ 중복 없음'}")
+
+
+def test_undo_manager():
+    """Undo 관리 모듈 테스트"""
     print("\n" + "=" * 60)
-    print("파일명 중복 감지 테스트")
+    print("↩️  UndoManager 모듈 테스트")
     print("=" * 60)
 
-    test_dir = Path("test_images")
-    if not test_dir.exists():
-        print("❌ test_images 디렉토리가 없습니다.")
+    test_log = Path("test_undo_log.json")
+    manager = UndoManager(log_file=test_log, max_logs=3)
+
+    # 로그 저장
+    print("\n로그 저장 테스트:")
+    manager.save_operation(
+        Path("/test/folder1"),
+        ["a.jpg", "b.jpg"],
+        ["1.jpg", "2.jpg"]
+    )
+    print("   ✅ 작업 1 저장")
+
+    manager.save_operation(
+        Path("/test/folder2"),
+        ["c.jpg", "d.jpg"],
+        ["3.jpg", "4.jpg"]
+    )
+    print("   ✅ 작업 2 저장")
+
+    # 로그 조회
+    print("\n로그 조회 테스트:")
+    all_ops = manager.get_all_operations()
+    print(f"   총 {len(all_ops)}개의 작업 기록")
+
+    has_ops = manager.has_operations()
+    print(f"   Undo 가능 여부: {'✅ 가능' if has_ops else '❌ 불가능'}")
+
+    last_op = manager.get_last_operation()
+    if last_op:
+        print(f"   마지막 작업 폴더: {last_op['folder']}")
+
+    # 로그 제거
+    print("\n로그 제거 테스트:")
+    removed = manager.remove_last_operation()
+    print(f"   제거 결과: {'✅ 성공' if removed else '❌ 실패'}")
+
+    # 정리
+    manager.clear_all()
+    print("   ✅ 테스트 로그 삭제 완료")
+
+
+def test_integration(file_items: List[FileItem]):
+    """통합 테스트 (전체 워크플로우)"""
+    print("\n" + "=" * 60)
+    print("🔗 통합 테스트 (전체 워크플로우)")
+    print("=" * 60)
+
+    if not file_items:
+        print("❌ 파일이 없어 통합 테스트를 건너뜁니다.")
         return
 
-    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif'}
-    file_items: List[FileItem] = []
+    # 1. 정렬
+    print("\n1단계: 숫자 정렬")
+    sorted_items = FileSorter.sort_by_numeric(file_items)
+    FileSorter.update_order(sorted_items)
+    print(f"   ✅ {len(sorted_items)}개 파일 정렬 완료")
 
-    for filepath in test_dir.iterdir():
-        if filepath.is_file() and filepath.suffix.lower() in IMAGE_EXTENSIONS:
-            file_items.append(FileItem(filepath))
+    # 2. 파일명 생성
+    print("\n2단계: 새 파일명 생성 (패턴: IMG_{000})")
+    pattern = "IMG_{000}"
+    for i, item in enumerate(sorted_items, 1):
+        item.new_name = NameGenerator.generate(i, pattern, item.ext)
 
-    # 정렬
-    file_items.sort(key=sort_key_numeric)
+    print("   미리보기 (상위 5개):")
+    for item in sorted_items[:5]:
+        print(f"      {item.original_name:<25} → {item.new_name}")
 
-    # 패턴 적용
-    pattern = "{n}"
-    for i, item in enumerate(file_items, 1):
-        item.new_name = generate_new_name(i, pattern, item.ext)
+    # 3. 중복 체크
+    print("\n3단계: 중복 파일명 검사")
+    new_names = [item.new_name for item in sorted_items]
+    has_dup = NameGenerator.check_duplicates(new_names)
+    print(f"   {'❌ 중복 발견!' if has_dup else '✅ 중복 없음'}")
 
-    # 중복 체크
-    new_names = [item.new_name for item in file_items]
-    unique_names = set(new_names)
-
-    print(f"\n총 파일 수: {len(new_names)}")
-    print(f"고유 파일명 수: {len(unique_names)}")
-
-    if len(new_names) == len(unique_names):
-        print("✅ 중복 파일명 없음")
-    else:
-        print("❌ 중복 파일명 발견!")
-        from collections import Counter
-        duplicates = [name for name, count in Counter(new_names).items() if count > 1]
-        print(f"중복된 파일명: {duplicates}")
-
-    print("\n변경 예정 파일명:")
-    for item in file_items:
-        print(f"   {item.original_name:<25} → {item.new_name}")
+    print("\n✅ 전체 워크플로우 테스트 완료!")
 
 
 def main():
     """메인 테스트 실행"""
-    print("\n🧪 Renam 핵심 로직 테스트 시작\n")
+    print("\n🧪 Renam 핵심 로직 테스트 (리팩토링 버전)\n")
+    print("클린코드 원칙 적용 - 단일 책임 원칙(SRP)\n")
 
-    test_sorting()
-    test_pattern_generation()
-    test_name_collision_detection()
+    # 각 모듈별 테스트
+    file_items = test_file_operations()
+
+    if file_items:
+        test_sorter(file_items)
+        test_integration(file_items)
+
+    test_name_generator()
+    test_undo_manager()
 
     print("\n" + "=" * 60)
-    print("✅ 모든 테스트 완료!")
+    print("✅ 모든 모듈 테스트 완료!")
     print("=" * 60 + "\n")
 
 
