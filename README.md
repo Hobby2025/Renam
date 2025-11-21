@@ -142,7 +142,7 @@ python app.py
 
 ### 📦 EXE 다운로드 (Windows)
 
-(추후 링크 제공 예정)
+[RENAM 1.0.0](https://github.com/Hobby2025/Renam/releases/download/1.0.0/Renam.exe)
 
 ---
 
