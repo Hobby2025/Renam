@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  renam:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: renam-app
+    image: renam:latest
+
+    # 포트 매핑
+    ports:
+      - "5901:5901"  # VNC 포트
+      - "6080:6080"  # noVNC 웹 포트 (브라우저 접속용)
+
+    # 환경 변수
+    environment:
+      - DISPLAY=:1
+      - VNC_RESOLUTION=1280x720
+      - VNC_PORT=5901
+      - NOVNC_PORT=6080
+
+    # 볼륨 마운트 (파일 작업용)
+    volumes:
+      - ./workspace:/workspace  # 작업 폴더
+
+    # 재시작 정책
+    restart: unless-stopped
+
+    # 리소스 제한 (선택사항)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # 헬스체크
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:6080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# 네트워크 (선택사항)
+networks:
+  default:
+    name: renam-network
