@@ -36,6 +36,11 @@ test_images/
 
 # Runtime files
 undo_log.json
+test_undo_log.json
+
+# Backup files
+*_old.py
+*.bak
 
 # IDEs
 .vscode/
