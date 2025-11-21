@@ -1,21 +1,24 @@
 # Renam 📁✨
 
-이미지 파일 정렬 및 일괄 이름 변경 도구 (Windows)
+이미지 파일 정렬 및 일괄 이름 변경 도구
 
 Renam은 이미지 파일을 폴더에서 자동 정렬하고, 사용자가 원하는 규칙으로 일괄적으로 파일명을 변경할 수 있는 GUI 기반 도구입니다.
+
+**크로스 플랫폼 지원**: Windows, macOS, Linux (Docker 지원)
 
 ## 🚀 주요 기능
 
 | 기능 | 설명 |
 |---|---|
-| 폴더 선택 | Windows 폴더 선택 창 제공 |
+| 폴더 선택 | 크로스 플랫폼 폴더 선택 창 제공 |
 | 이미지 필터링 | JPG, PNG 등 확장자 자동 선택 |
 | 정렬 규칙 선택 | 숫자, 알파벳, 날짜, 확장자 |
 | 사용자 규칙 입력 | 정규식 기반 정렬 키 설정 |
 | 실시간 미리보기 | 변경될 파일명을 즉시 표시 |
-| 수동 정렬 기능 | 드래그 & 드롭 or ↑↓ 이동 |
-| Undo 기능 | 원래 파일명으로 복구 |
-| EXE 제공 | 설치 없이 실행 가능 |
+| 수동 정렬 기능 | ↑↓ 버튼으로 순서 이동 |
+| Undo 기능 | 원래 파일명으로 복구 (최근 10개) |
+| Docker 지원 | 웹 브라우저로 GUI 접속 가능 |
+| EXE 제공 | Windows 설치 없이 실행 가능 |
 
 ## 🖥️ 사용 방법
 
@@ -57,17 +60,80 @@ Renam은 이미지 파일을 폴더에서 자동 정렬하고, 사용자가 원�
 - **Python** 3.10+
 - **Tkinter** (GUI)
 - **os, pathlib, re, shutil** (파일 처리)
+- **Docker** (컨테이너화)
+  - TigerVNC (VNC 서버)
+  - noVNC (웹 기반 VNC 클라이언트)
+  - Fluxbox (경량 윈도우 매니저)
 - **pyinstaller** (Windows 실행 파일 패키징)
 
 ## 📦 설치 & 실행
 
-### EXE 다운로드 → 바로 실행
+### 🐳 Docker로 실행 (권장 - 모든 플랫폼)
+
+**가장 쉬운 방법! 웹 브라우저로 GUI 접속**
+
+```bash
+# 1. 저장소 클론
+git clone https://github.com/Hobby2025/Renam.git
+cd Renam
+
+# 2. 작업 폴더 생성 (이미지 파일을 여기에 넣으세요)
+mkdir workspace
+
+# 3. Docker Compose로 실행
+docker-compose up -d
+
+# 4. 웹 브라우저에서 접속
+# http://localhost:6080
+```
+
+**접속 정보**:
+- **웹 UI**: http://localhost:6080 (noVNC)
+- **VNC 클라이언트**: localhost:5901 (비밀번호: `renam`)
+
+**파일 작업**:
+- `workspace/` 폴더에 이미지 파일을 넣으세요
+- GUI에서 `/workspace` 폴더를 선택하세요
+- 파일명 변경 후 `workspace/` 폴더에서 결과 확인
+
+**중지 및 제거**:
+```bash
+# 중지
+docker-compose stop
+
+# 재시작
+docker-compose start
+
+# 완전 제거
+docker-compose down
+```
+
+---
+
+### 💻 로컬 환경 직접 실행
+
+**Python 3.10+ 필요**
+
+```bash
+# 의존성 설치
+pip install -r requirements.txt
+
+# 실행
+python app.py
+```
+
+---
+
+### 📦 EXE 다운로드 (Windows)
 (추후 링크 제공 예정)
 
-### 개발 환경 직접 실행
+---
+
+### 🧪 테스트 실행
+
 ```bash
-pip install -r requirements.txt
-python app.py
+# 핵심 로직 테스트
+python test_logic.py
 ```
 
 ## 📋 동작 흐름

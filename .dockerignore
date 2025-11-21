@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist
+build
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# Testing
+test_images/
+*.test
+
+# Runtime files
+undo_log.json
+test_undo_log.json
+
+# Backup files
+*_old.py
+*.bak
+app_old.py
+test_logic_old.py
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (included in image)
+# README.md
+# ARCHITECTURE.md
+# LICENSE
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Workspace (mounted as volume)
+workspace/

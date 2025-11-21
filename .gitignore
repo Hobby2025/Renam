@@ -52,3 +52,7 @@ test_undo_log.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker workspace
+workspace/*
+!workspace/README.md
