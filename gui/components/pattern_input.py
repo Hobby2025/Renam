@@ -143,5 +143,21 @@ class PatternInput(ctk.CTkFrame):
         return "{n}"
 
     def set_pattern(self, pattern: str):
-        """패턴 설정 (단순 호환성 유지용)"""
-        pass
+        """
+        패턴 설정
+
+        Args:
+            pattern: 설정할 패턴 문자열 (예: "{n}", "image_{n}")
+        """
+        if pattern == "{n}":
+            self.mode_var.set("숫자")
+            self.prefix_var.set("")
+        elif "_" in pattern and "{n}" in pattern:
+            # "prefix_{n}" 형식
+            prefix = pattern.split("_{n}")[0]
+            self.mode_var.set("파일명_숫자")
+            self.prefix_var.set(prefix)
+        else:
+            # 기본값
+            self.mode_var.set("숫자")
+            self.prefix_var.set("")

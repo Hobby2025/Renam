@@ -27,7 +27,7 @@ def main():
     """
     try:
         # CustomTkinter 기본 설정
-        ctk.set_appearance_mode("dark")  # "light" or "dark"
+        ctk.set_appearance_mode("light")  # "light" or "dark"
         ctk.set_default_color_theme("blue")  # "blue", "green", "dark-blue"
         
         root = ctk.CTk()

@@ -143,3 +143,42 @@ class FileOperations:
             return (False, "유효한 폴더가 아닙니다.")
 
         return (True, "")
+
+    @staticmethod
+    def get_subfolders(folder_path: Path) -> List[str]:
+        """
+        하위 폴더 목록 가져오기
+
+        Args:
+            folder_path: 검색할 폴더 경로
+
+        Returns:
+            하위 폴더명 리스트 (정렬됨)
+        """
+        if not folder_path.exists() or not folder_path.is_dir():
+            return []
+
+        subfolders = []
+        for item in folder_path.iterdir():
+            if item.is_dir():
+                subfolders.append(item.name)
+
+        # 자연스러운 정렬 (숫자 고려)
+        return sorted(subfolders, key=lambda x: (
+            [int(s) if s.isdigit() else s.lower() for s in __import__('re').split('([0-9]+)', x)]
+        ))
+
+    @staticmethod
+    def scan_subfolder(parent_folder: Path, subfolder_name: str) -> List[FileItem]:
+        """
+        특정 하위 폴더의 이미지 파일 스캔
+
+        Args:
+            parent_folder: 부모 폴더 경로
+            subfolder_name: 하위 폴더명
+
+        Returns:
+            이미지 파일 아이템 리스트
+        """
+        subfolder_path = parent_folder / subfolder_name
+        return FileOperations.scan_folder(subfolder_path)

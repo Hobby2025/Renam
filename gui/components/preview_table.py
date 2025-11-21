@@ -37,7 +37,9 @@ class PreviewTable(ctk.CTkFrame):
         self.on_reset = on_reset
 
         self.file_listbox: Optional[Listbox] = None
-        
+
+        self.title_label: Optional[ctk.CTkLabel] = None
+
         # 다중 선택을 위한 변수
         self.selected_indices = set()  # 선택된 인덱스들
         self.last_selected_index = None  # 마지막 선택된 인덱스 (Shift 선택용)
@@ -64,12 +66,13 @@ class PreviewTable(ctk.CTkFrame):
         header_frame = ctk.CTkFrame(inner_container, fg_color="transparent")
         header_frame.pack(fill="x", pady=(0, ModernStyle.SPACING['md']))
 
-        ctk.CTkLabel(
+        self.title_label = ctk.CTkLabel(
             header_frame,
             text="미리보기",
             font=ModernStyle.create_font('body', 'bold'),
             text_color=ModernStyle.COLORS['text_primary']
-        ).pack(side="left")
+        )
+        self.title_label.pack(side="left")
 
         # 테이블 프레임
         table_frame = ctk.CTkFrame(inner_container, fg_color="transparent")
@@ -202,6 +205,15 @@ class PreviewTable(ctk.CTkFrame):
             hover_color=ModernStyle.COLORS['button_primary_hover'],
             corner_radius=ModernStyle.RADIUS['sm']
         ).pack(side="left", padx=ModernStyle.SPACING['xs'])
+
+    def set_folder_title(self, folder_title: Optional[str]):
+        if folder_title:
+            text = f"미리보기 > {folder_title}"
+        else:
+            text = "미리보기"
+
+        if self.title_label is not None:
+            self.title_label.configure(text=text)
 
     def update_preview(self, file_items: List[FileItem]):
         """

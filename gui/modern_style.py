@@ -89,6 +89,7 @@ class ModernStyle:
         'headline': 18,     # 헤드라인
         'body': 16,         # 본문
         'subhead': 14,      # 부제목
+        'micro': 11,
         'caption': 12,      # 캡션
     }
 
