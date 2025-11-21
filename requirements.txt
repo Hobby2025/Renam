@@ -1,0 +1,17 @@
+# Renam - Image File Sorter and Renamer
+# Python 3.10+
+
+# GUI (Tkinter is built-in with Python)
+# No additional GUI dependencies needed
+
+# File packaging
+pyinstaller>=5.13.0
+
+# Standard library modules used:
+# - tkinter (built-in)
+# - os (built-in)
+# - pathlib (built-in)
+# - re (built-in)
+# - shutil (built-in)
+# - json (built-in)
+# - datetime (built-in)
