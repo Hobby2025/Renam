@@ -20,7 +20,15 @@ Renam/
 │   └── undo_manager.py    # Undo 기능 관리
 ├── gui/                   # 프레젠테이션 계층
 │   ├── __init__.py
-│   └── main_window.py     # GUI 메인 윈도우
+│   ├── modern_style.py    # 모던 UI 디자인 시스템
+│   ├── main_window.py     # GUI 메인 윈도우 (오케스트레이터)
+│   └── components/        # 재사용 가능한 UI 컴포넌트
+│       ├── __init__.py
+│       ├── folder_selector.py   # 폴더 선택 컴포넌트
+│       ├── sort_options.py      # 정렬 옵션 컴포넌트
+│       ├── pattern_input.py     # 패턴 입력 컴포넌트
+│       ├── preview_table.py     # 미리보기 테이블 컴포넌트
+│       └── action_buttons.py    # 액션 버튼 컴포넌트
 ├── test_logic.py          # 핵심 로직 테스트
 └── requirements.txt       # 의존성
 ```
@@ -114,39 +122,92 @@ UndoManager
 
 ### 3. 프레젠테이션 계층 (gui/)
 
-#### `main_window.py`
-- **책임**: 사용자 인터페이스 표시 및 이벤트 처리
+#### `modern_style.py`
+- **책임**: UI 디자인 시스템 (색상, 폰트, 스타일)
 - **기능**:
-  - GUI 컴포넌트 생성 및 배치
-  - 사용자 이벤트 처리
-  - core 계층 호출 및 결과 표시
-  - 오류 메시지 표시
+  - 모던 미니멀 디자인 색상 팔레트
+  - 시스템 폰트 설정 (macOS/Windows)
+  - 8pt 그리드 시스템 간격
+  - 컴포넌트별 스타일 제공
+
+```python
+ModernStyle
+  ├── COLORS              # 색상 정의
+  ├── FONTS               # 폰트 설정
+  ├── FONT_SIZES          # 폰트 크기
+  ├── SPACING             # 간격 시스템
+  ├── get_button_style()  # 버튼 스타일
+  ├── get_frame_style()   # 프레임 스타일
+  ├── get_label_style()   # 레이블 스타일
+  └── create_font()       # 폰트 객체 생성
+```
+
+#### `main_window.py`
+- **책임**: UI 컴포넌트 조립 및 이벤트 조정 (오케스트레이터)
+- **기능**:
+  - 컴포넌트 생성 및 배치
+  - 컴포넌트 간 이벤트 조정
+  - core 계층 호출 및 결과 전달
+  - 전역 상태 관리
 
 ```python
 RenamMainWindow
-  ├── _create_folder_selector()   # 폴더 선택 UI
-  ├── _create_sort_options()      # 정렬 옵션 UI
-  ├── _create_pattern_input()     # 패턴 입력 UI
-  ├── _create_preview_table()     # 미리보기 테이블 UI
-  ├── _create_action_buttons()    # 액션 버튼 UI
-  ├── _on_select_folder()         # 폴더 선택 이벤트
-  ├── _on_sort_changed()          # 정렬 변경 이벤트
-  ├── _on_move_up/down()          # 항목 이동 이벤트
-  ├── _on_execute()               # 실행 이벤트
-  └── _on_undo()                  # 되돌리기 이벤트
+  ├── folder_selector     # FolderSelector 컴포넌트
+  ├── sort_options        # SortOptions 컴포넌트
+  ├── pattern_input       # PatternInput 컴포넌트
+  ├── preview_table       # PreviewTable 컴포넌트
+  ├── action_buttons      # ActionButtons 컴포넌트
+  ├── _on_folder_selected()  # 폴더 선택 이벤트 조정
+  ├── _on_sort_changed()     # 정렬 변경 이벤트 조정
+  ├── _on_move_up/down()     # 항목 이동 이벤트 조정
+  ├── _on_execute()          # 실행 이벤트 조정
+  └── _on_undo()             # 되돌리기 이벤트 조정
 ```
+
+#### `components/` - 재사용 가능한 UI 컴포넌트
+
+각 컴포넌트는 **단일 책임**을 가지며 **독립적으로 재사용** 가능합니다.
+
+##### `folder_selector.py`
+- **책임**: 폴더 선택 UI
+- **기능**: 폴더 다이얼로그, 경로 표시, 선택 콜백
+
+##### `sort_options.py`
+- **책임**: 정렬 옵션 선택 UI
+- **기능**: 라디오 버튼, 정규식 입력, 선택 콜백
+
+##### `pattern_input.py`
+- **책임**: 파일명 패턴 입력 UI
+- **기능**: 패턴 입력 필드, 예시 표시
+
+##### `preview_table.py`
+- **책임**: 파일 목록 미리보기 UI
+- **기능**: 리스트박스, 순서 변경 버튼, 선택 관리
+
+##### `action_buttons.py`
+- **책임**: 액션 버튼 UI
+- **기능**: 실행, 되돌리기, 종료 버튼
 
 ## 설계 원칙
 
 ### 단일 책임 원칙 (SRP)
 각 모듈과 클래스는 **하나의 책임**만 가집니다:
 
+**비즈니스 로직**:
 - `FileItem`: 파일 데이터 표현
 - `FileSorter`: 정렬 로직
 - `NameGenerator`: 파일명 생성
 - `FileOperations`: 파일 시스템 작업
 - `UndoManager`: Undo 관리
-- `RenamMainWindow`: UI 표시 및 이벤트 처리
+
+**프레젠테이션**:
+- `ModernStyle`: UI 디자인 시스템
+- `RenamMainWindow`: 컴포넌트 조립 및 이벤트 조정
+- `FolderSelector`: 폴더 선택 UI
+- `SortOptions`: 정렬 옵션 UI
+- `PatternInput`: 패턴 입력 UI
+- `PreviewTable`: 미리보기 테이블 UI
+- `ActionButtons`: 액션 버튼 UI
 
 ### 의존성 역전 원칙 (DIP)
 - GUI 계층은 비즈니스 로직(core)에 의존
@@ -204,10 +265,15 @@ def sort_by_size(items: List[FileItem]) -> List[FileItem]:
 
 ### 새로운 UI 컴포넌트 추가
 ```python
-# gui/main_window.py에 메서드 추가
-def _create_advanced_options(self):
-    # 고급 옵션 UI 구성
-    pass
+# gui/components/에 새 컴포넌트 생성
+class AdvancedOptions(Frame):
+    def __init__(self, parent, on_change=None):
+        super().__init__(parent, **ModernStyle.get_frame_style())
+        # 고급 옵션 UI 구성
+
+# gui/main_window.py에서 사용
+self.advanced_options = AdvancedOptions(content_frame, on_change=self._on_advanced_changed)
+self.advanced_options.pack(fill="x")
 ```
 
 ## 장점
@@ -233,18 +299,33 @@ app.py (600+ lines)
   └── main()
 ```
 
-### After (모듈 분리)
+### After (컴포넌트 기반 모듈 분리)
 ```
 app.py (40 lines) - 진입점
-models/file_item.py (50 lines) - 데이터
-core/sorter.py (120 lines) - 정렬
-core/name_generator.py (100 lines) - 파일명 생성
-core/file_operations.py (120 lines) - 파일 작업
-core/undo_manager.py (80 lines) - Undo
-gui/main_window.py (350 lines) - GUI
+
+models/
+  └── file_item.py (50 lines) - 데이터 모델
+
+core/
+  ├── sorter.py (120 lines) - 정렬 로직
+  ├── name_generator.py (100 lines) - 파일명 생성
+  ├── file_operations.py (120 lines) - 파일 작업
+  └── undo_manager.py (80 lines) - Undo 관리
+
+gui/
+  ├── modern_style.py (260 lines) - 디자인 시스템
+  ├── main_window.py (290 lines) - 이벤트 조정
+  └── components/
+      ├── folder_selector.py (110 lines) - 폴더 선택 UI
+      ├── sort_options.py (130 lines) - 정렬 옵션 UI
+      ├── pattern_input.py (70 lines) - 패턴 입력 UI
+      ├── preview_table.py (160 lines) - 미리보기 UI
+      └── action_buttons.py (60 lines) - 액션 버튼 UI
 ```
 
 **결과**:
-- 각 파일이 100~350줄로 관리하기 쉬운 크기
-- 각 모듈의 책임이 명확
+- 각 파일이 40~290줄로 관리하기 쉬운 크기
+- 각 모듈/컴포넌트의 책임이 명확
+- UI 컴포넌트 재사용 가능
 - 테스트 및 확장 용이
+- 디자인 시스템 일관성 유지
