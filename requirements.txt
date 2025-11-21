@@ -1,8 +1,8 @@
 # Renam - Image File Sorter and Renamer
 # Python 3.10+
 
-# GUI (Tkinter is built-in with Python)
-# No additional GUI dependencies needed
+# GUI
+customtkinter>=5.2.0
 
 # File packaging
 pyinstaller>=5.13.0

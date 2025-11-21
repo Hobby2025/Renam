@@ -16,7 +16,7 @@ Renam - Image File Sorter and Renamer
 """
 
 import sys
-from tkinter import Tk
+import customtkinter as ctk
 from gui.main_window import RenamMainWindow
 
 
@@ -26,7 +26,11 @@ def main():
     책임: 애플리케이션 초기화 및 실행
     """
     try:
-        root = Tk()
+        # CustomTkinter 기본 설정
+        ctk.set_appearance_mode("dark")  # "light" or "dark"
+        ctk.set_default_color_theme("blue")  # "blue", "green", "dark-blue"
+        
+        root = ctk.CTk()
         app = RenamMainWindow(root)
         app.run()
     except KeyboardInterrupt:
